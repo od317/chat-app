@@ -1,85 +1,83 @@
 "use client";
 import { useAuth } from "@/hooks/useAuth";
-import UserProfile from "@/components/auth/UserProfile";
 import Button from "@/components/ui/Button";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import Navbar from "@/components/layout/Navbar";
+import { FiMessageSquare } from "react-icons/fi";
 
-/**
- * Home Page - Client Component
- * Why CSR?
- * - Dynamic authentication state
- * - Real-time user data
- * - Interactive elements
- */
 export default function HomePage() {
   const { user, loading } = useAuth();
+  const router = useRouter();
 
-  // Show loading state
+  useEffect(() => {
+    if (!loading && !user) {
+      router.replace("/login");
+    }
+  }, [user, loading, router]);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
-  // Redirect to login if not authenticated
-  if (!user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <div className="text-center space-y-6">
-          <div className="space-y-2">
-            <h1 className="text-4xl font-bold text-foreground">
-              Welcome to Chat App
-            </h1>
-            <p className="text-foreground/70">Please sign in to continue</p>
-          </div>
-          <Link href="/login">
-            <Button size="lg">Go to Sign In</Button>
-          </Link>
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="text-foreground/70">Loading your chat app...</p>
         </div>
       </div>
     );
   }
 
-  // Show user profile when authenticated
+  if (!user) {
+    return null;
+  }
+
   return (
-    <div className="min-h-screen bg-background p-4">
-      <div className="container mx-auto max-w-4xl">
-        {/* Header */}
-        <header className="flex justify-between items-center mb-8 py-4">
-          <h1 className="text-3xl font-bold text-foreground">Chat App</h1>
-          <div className="text-sm text-foreground/70">
-            Welcome, {user.displayName || user.email}
-          </div>
-        </header>
+    <div className="min-h-screen bg-background">
+      {/* Navigation */}
+      <Navbar />
 
-        {/* Main Content */}
-        <main className="grid gap-8 md:grid-cols-2">
-          {/* User Profile Section */}
-          <section>
-            <h2 className="text-2xl font-semibold text-foreground mb-4">
-              Your Profile
-            </h2>
-            <UserProfile />
-          </section>
+      {/* Main Content */}
+      <main className="container mx-auto px-4 py-8 max-w-6xl">
+        <div className="grid gap-8 lg:grid-cols-3">
+          {/* Main Chat Area */}
+          <div className="lg:col-span-2">
+            <div className="space-y-6">
+              {/* Welcome Section */}
+              <div className="p-6 rounded-2xl bg-highlights/50 border border-highlights/30">
+                <h1 className="text-3xl font-bold text-foreground mb-2">
+                  Welcome to ChatApp! 🎉
+                </h1>
+                <p className="text-foreground/70 mb-4">
+                  Ready to start chatting? Your messages will appear here.
+                </p>
+                <div className="flex flex-wrap gap-3">
+                  <Button variant="primary">Start New Chat</Button>
+                  <Button variant="ghost">Create Group</Button>
+                </div>
+              </div>
 
-          {/* Chat Interface Placeholder */}
-          <section>
-            <h2 className="text-2xl font-semibold text-foreground mb-4">
-              Chat Rooms
-            </h2>
-            <div className="p-6 rounded-2xl bg-highlights/50 border border-highlights/30 text-center">
-              <p className="text-foreground/70 mb-4">
-                Chat functionality coming soon!
-              </p>
-              <Button variant="secondary" disabled>
-                Start Chatting
-              </Button>
+              {/* Chat Interface Placeholder */}
+              <div className="p-8 rounded-2xl bg-highlights/30 border border-highlights/20 text-center">
+                <div className="max-w-md mx-auto space-y-4">
+                  <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto">
+                    <FiMessageSquare className="w-8 h-8 text-primary" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-foreground">
+                    No chats yet
+                  </h3>
+                  <p className="text-foreground/60">
+                    Start a conversation by selecting a contact or creating a
+                    group chat.
+                  </p>
+                  <Button variant="secondary" className="mt-4">
+                    Explore Contacts
+                  </Button>
+                </div>
+              </div>
             </div>
-          </section>
-        </main>
-      </div>
+          </div>
+        </div>
+      </main>
     </div>
   );
 }
