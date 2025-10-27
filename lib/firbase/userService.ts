@@ -5,7 +5,6 @@ import {
   getDocs,
   query,
   where,
-  orderBy,
   limit,
   getDoc,
 } from "firebase/firestore";
@@ -22,6 +21,7 @@ export interface UserProfile {
   searchableName: string; // Lowercase for case-insensitive search
   searchableEmail: string; // Lowercase for case-insensitive search
 }
+
 
 /**
  * Creates or updates a user profile in Firestore

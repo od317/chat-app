@@ -1,33 +1,56 @@
 "use client";
 import { useAuth } from "@/hooks/useAuth";
-import Button from "@/components/ui/Button";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Navbar from "@/components/layout/Navbar";
-import { UserProfile as UserProfileType } from "../lib/firbase/userService";
-import { FiMessageCircle, FiUsers } from "react-icons/fi";
-import Image from "next/image";
+import SearchBar from "@/components/search/SearchBar";
+import ChatHistory from "@/components/chat/ChatHistory";
+import ChatWindow from "@/components/chat/ChatWindow";
+import { useChat } from "@/hooks/useChat";
+import { UserProfile } from "@/lib/firbase/userService";
+import { FiMessageSquare, FiUsers } from "react-icons/fi";
 
 export default function HomePage() {
-  const { user, loading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
-  const [selectedUser, setSelectedUser] = useState<UserProfileType | null>(
-    null
-  );
+  const [showMobileChat, setShowMobileChat] = useState(false);
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.replace("/login");
+  // Use our new chat hook
+  const {
+    chats,
+    activeChat,
+    loading: chatsLoading,
+    error,
+    startChat,
+    setActiveChat,
+    getOtherParticipant,
+  } = useChat();
+
+  // Handle starting a chat from search
+  const handleStartChat = async (otherUser: UserProfile) => {
+    try {
+      await startChat(otherUser);
+      // On mobile, switch to chat view when starting a new chat
+      setShowMobileChat(true);
+    } catch (error) {
+      console.error("Failed to start chat:", error);
     }
-  }, [user, loading, router]);
-
-  const handleStartChat = (user: UserProfileType) => {
-    setSelectedUser(user);
-    // TODO: Implement actual chat creation
-    console.log("Starting chat with:", user);
   };
 
-  if (loading) {
+  // Handle chat selection
+  const handleChatSelect = (chat: any) => {
+    setActiveChat(chat);
+    setShowMobileChat(true);
+  };
+
+  // Redirect if not authenticated
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.replace("/login");
+    }
+  }, [user, authLoading, router]);
+
+  if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center space-y-4">
@@ -42,89 +65,63 @@ export default function HomePage() {
     return null;
   }
 
+  const otherParticipant = activeChat ? getOtherParticipant(activeChat) : null;
+
   return (
     <div className="min-h-screen bg-background">
-      {/* Navigation */}
       <Navbar />
 
-      {/* Main Content */}
-      <main className="container mx-auto px-4 py-8 max-w-6xl">
-        <div className="grid gap-8 lg:grid-cols-3">
-          {/* Main Chat Area */}
-          <div className="lg:col-span-2">
-            <div className="space-y-6">
-              {/* Welcome Section */}
-              <div className="p-6 rounded-2xl bg-highlights/50 border border-highlights/30">
-                <h1 className="text-3xl font-bold text-foreground mb-2">
-                  Welcome to ChatApp! 🎉
-                </h1>
-                <p className="text-foreground/70 mb-4">
-                  Search for users above to start chatting, or explore your
-                  existing conversations.
-                </p>
-                <div className="flex flex-wrap gap-3">
-                  <Button variant="primary">
-                    <FiMessageCircle className="w-4 h-4 mr-2" />
-                    Start New Chat
-                  </Button>
-                  <Button variant="ghost">Create Group</Button>
-                </div>
-              </div>
+      <main className="container mx-auto max-w-7xl h-[calc(100vh-4rem)]">
+        <div className="grid grid-cols-1 lg:grid-cols-4 h-full">
+          {/* Left Sidebar - Search & Chat History */}
+          <div
+            className={`
+            lg:col-span-1 h-full flex flex-col border-r border-highlights/30
+            ${showMobileChat ? "hidden lg:flex" : "flex"}
+          `}
+          >
+            {/* Search Section */}
+            <div className="p-4 border-b border-highlights/30">
+              <h2 className="text-lg font-semibold text-foreground mb-3">
+                Find Users
+              </h2>
+              <SearchBar
+                onStartChat={handleStartChat}
+                placeholder="Search by name or email..."
+              />
 
-              {/* Selected User Preview */}
-              {selectedUser && (
-                <div className="p-6 rounded-2xl bg-primary/10 border border-primary/20">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      {selectedUser.photoURL ? (
-                        <Image
-                          width={12}
-                          height={12}
-                          src={selectedUser.photoURL}
-                          alt={selectedUser.displayName}
-                          className="w-12 h-12 rounded-full"
-                        />
-                      ) : (
-                        <div className="w-12 h-12 rounded-full bg-linear-to-r from-primary to-secondary flex items-center justify-center">
-                          <FiUsers className="w-6 h-6 text-highlights" />
-                        </div>
-                      )}
-                      <div>
-                        <h3 className="text-lg font-semibold text-foreground">
-                          Ready to chat with {selectedUser.displayName}
-                        </h3>
-                        <p className="text-foreground/60">
-                          {selectedUser.email}
-                        </p>
-                      </div>
-                    </div>
-                    <Button variant="primary">Start Chatting</Button>
-                  </div>
-                </div>
-              )}
-
-              {/* Chat Interface Placeholder */}
-              <div className="p-8 rounded-2xl bg-highlights/30 border border-highlights/20 text-center">
-                <div className="max-w-md mx-auto space-y-4">
-                  <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto">
-                    <FiMessageCircle className="w-8 h-8 text-primary" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-foreground">
-                    {selectedUser ? "Start a conversation" : "No chats yet"}
-                  </h3>
-                  <p className="text-foreground/60">
-                    {selectedUser
-                      ? `Send your first message to ${selectedUser.displayName}`
-                      : "Search for users above to start chatting"}
-                  </p>
-                  {!selectedUser && (
-                    <Button variant="secondary" className="mt-4">
-                      Explore Contacts
-                    </Button>
-                  )}
+              {/* Search Tips */}
+              <div className="mt-3 p-3 rounded-lg bg-highlights/30 border border-highlights/20">
+                <div className="flex items-center space-x-2 text-sm text-foreground/60">
+                  <FiUsers className="w-4 h-4" />
+                  <span>Find people to start chatting with</span>
                 </div>
               </div>
             </div>
+
+            {/* Chat History */}
+            <div className="flex-1">
+              <ChatHistory
+                chats={chats}
+                activeChat={activeChat}
+                onChatSelect={handleChatSelect}
+                loading={chatsLoading}
+              />
+            </div>
+          </div>
+
+          {/* Chat Window */}
+          <div
+            className={`
+            lg:col-span-3 h-full
+            ${showMobileChat ? "flex" : "hidden lg:flex"}
+          `}
+          >
+            <ChatWindow
+              chat={activeChat}
+              otherParticipant={otherParticipant}
+              onBack={() => setShowMobileChat(false)}
+            />
           </div>
         </div>
       </main>
