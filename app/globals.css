@@ -1,1 +1,93 @@
 @import "tailwindcss";
+
+:root {
+    --primary: #ff0000;
+    --secondary: #e00909;
+    --highlights: #faf7f7;
+    --background: #fcfcfc;
+    --foreground: #2A2A2A;
+}
+
+:root[class="dark"] {
+    --primary: #ff4444;
+    --secondary: #ff6b6b;
+    --highlights: #1a1a1a;
+    --background: #0a0a0a;
+    --foreground: #f5f5f5;
+}
+
+@theme inline {
+    --color-primary: var(--primary);
+    --color-secondary: var(--secondary);
+    --color-highlights: var(--highlights);
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+    --font-sans: var(--font-geist-sans);
+    --font-mono: var(--font-geist-mono);
+}
+
+body {
+    background-color: var(--background);
+    color: var(--foreground);
+    overflow-x: hidden;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.drop-shadow-glow {
+    filter: drop-shadow(0 0 6px var(--primary));
+}
+
+/* Smooth scrolling */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--background);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--primary);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--secondary);
+}
+
+/* Smooth transitions for footer elements */
+footer {
+    transition: all 0.3s ease;
+}
+
+/* Custom scrollbar for footer if needed */
+footer ::-webkit-scrollbar {
+    width: 6px;
+}
+
+footer ::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+footer ::-webkit-scrollbar-thumb {
+    background: var(--primary);
+    border-radius: 3px;
+}
+
+/* Glow effects */
+.footer-glow {
+    box-shadow: 0 0 20px rgba(220, 20, 60, 0.3);
+}
+
+/* Pattern overlay */
+.footer-pattern {
+    background-image:
+        radial-gradient(circle at 25% 25%, rgba(255, 255, 255, 0.1) 2px, transparent 2px),
+        radial-gradient(circle at 75% 75%, rgba(255, 255, 255, 0.1) 2px, transparent 2px);
+    background-size: 30px 30px;
+}
