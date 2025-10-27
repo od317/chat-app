@@ -97,7 +97,7 @@ export default function ChatHistory({
       </div>
 
       {/* Chat List */}
-      <div className="flex-1 overflow-y-auto max-h-[50vh] overflow-y-scroll">
+      <div className="flex-1  max-h-[50vh] overflow-y-scroll">
         {chats.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center p-8">
             <FiMessageSquare className="w-12 h-12 text-foreground/30 mb-3" />
