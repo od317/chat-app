@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import ThemeToggle from "./ThemeToggle";
 import Image from "next/image";
+import SearchBar from "../search/SearchBar";
 
 export default function Navbar() {
   const { user, logout, loading } = useAuth();
@@ -41,6 +42,15 @@ export default function Navbar() {
 
           {/* Desktop Navigation - Center */}
           <div className="hidden md:flex items-center space-x-1">
+            <SearchBar
+              onStartChat={(user) => {
+                // Handle starting chat from navbar
+                console.log("Start chat with:", user);
+              }}
+              placeholder="Search users..."
+              variant="navbar"
+            />
+
             <NavLink href="/" active>
               Chats
             </NavLink>

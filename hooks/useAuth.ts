@@ -8,6 +8,8 @@ import {
   User,
 } from "firebase/auth";
 import { auth } from "@/lib/firbase/clientApp";
+import { createOrUpdateUserProfile } from "@/lib/firbase/userService";
+import { clearAuthCookies, setAuthCookie } from "@/lib/authUtils";
 
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -15,16 +17,20 @@ export const useAuth = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    /**
-     * onAuthStateChanged listener:
-     * - Automatically handles auth state changes
-     * - Fires immediately with current user on mount
-     * - Subscribes to real-time auth updates
-     * Performance: Unsubscribes on component unmount to prevent memory leaks
-     */
     const unsubscribe = onAuthStateChanged(
       auth,
-      (user) => {
+      async (user) => {
+        if (user) {
+          // Create/update user profile in Firestore when user logs in
+          try {
+            await createOrUpdateUserProfile(user);
+            await setAuthCookie(user);
+          } catch (error) {
+            console.error("Error creating user profile:", error);
+          }
+        } else {
+          clearAuthCookies();
+        }
         setUser(user);
         setLoading(false);
         setError(null);
@@ -32,10 +38,10 @@ export const useAuth = () => {
       (error) => {
         setError(error.message);
         setLoading(false);
+        clearAuthCookies();
       }
     );
 
-    // Cleanup function for memory management
     return () => unsubscribe();
   }, []);
 
