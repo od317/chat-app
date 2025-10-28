@@ -1,5 +1,5 @@
 "use client";
-import { Message } from "@/lib/firbase/messageService";
+import { Message } from "@/lib/firebase/messageService";
 import { User } from "firebase/auth";
 
 interface MessageBubbleProps {

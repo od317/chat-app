@@ -1,8 +1,11 @@
 "use client";
+import { ChatConversation } from "@/lib/firebase/chatService";
 import { FiMessageSquare, FiUser, FiClock } from "react-icons/fi";
 import { useAuth } from "@/hooks/useAuth";
+import { useOtherUsersPresence } from "@/hooks/usePresence";
+import PresenceIndicator from "@/components/presence/PresenceIndicator";
 import Image from "next/image";
-import { ChatConversation } from "@/lib/firbase/chatService";
+import { useEffect } from "react";
 
 interface ChatHistoryProps {
   chats: ChatConversation[];
@@ -11,13 +14,6 @@ interface ChatHistoryProps {
   loading?: boolean;
 }
 
-/**
- * Chat History Component - Shows list of conversations
- * Why separate component?
- * - Reusable across different layouts
- * - Clean separation of concerns
- * - Better performance with virtual scrolling potential
- */
 export default function ChatHistory({
   chats,
   activeChat,
@@ -25,6 +21,46 @@ export default function ChatHistory({
   loading = false,
 }: ChatHistoryProps) {
   const { user: currentUser } = useAuth();
+
+  // Get user IDs of all other participants for presence tracking
+  const otherUserIds = chats
+    .map((chat) => {
+      if (!currentUser) return "";
+      const otherUserId = chat.participants.find(
+        (id) => id !== currentUser.uid
+      );
+      return otherUserId || "";
+    })
+    .filter(Boolean);
+
+  // Add debugging
+  useEffect(() => {
+    console.log("🔍 ChatHistory Debug:");
+    console.log("Current User ID:", currentUser?.uid);
+    console.log("Chats:", chats.length);
+    console.log("Other User IDs:", otherUserIds);
+    console.log(
+      "Chat participants:",
+      chats.map((chat) => ({
+        id: chat.id,
+        participants: chat.participants,
+        otherParticipant: chat.participants.find(
+          (id) => id !== currentUser?.uid
+        ),
+      }))
+    );
+  }, [chats, currentUser, otherUserIds]);
+
+  // Subscribe to presence of all chat participants
+  const { presences, loading: presenceLoading } =
+    useOtherUsersPresence(otherUserIds);
+
+  // Add presence debugging
+  useEffect(() => {
+    console.log("📡 Presence Debug:");
+    console.log("Presences Map Size:", presences.size);
+    console.log("Presences:", Array.from(presences.entries()));
+  }, [presences]);
 
   // Format timestamp for display
   const formatTime = (date: Date) => {
@@ -49,9 +85,7 @@ export default function ChatHistory({
   const getOtherParticipantName = (chat: ChatConversation) => {
     if (!currentUser) return "Unknown User";
 
-    const otherUserId = chat.participants.find(
-      (id: string) => id !== currentUser.uid
-    );
+    const otherUserId = chat.participants.find((id) => id !== currentUser.uid);
     return chat.participantData[otherUserId!]?.displayName || "Unknown User";
   };
 
@@ -59,10 +93,16 @@ export default function ChatHistory({
   const getOtherParticipantPhoto = (chat: ChatConversation) => {
     if (!currentUser) return null;
 
-    const otherUserId = chat.participants.find(
-      (id: string) => id !== currentUser.uid
-    );
+    const otherUserId = chat.participants.find((id) => id !== currentUser.uid);
     return chat.participantData[otherUserId!]?.photoURL || null;
+  };
+
+  // Get presence for a specific chat
+  const getChatPresence = (chat: ChatConversation) => {
+    if (!currentUser) return null;
+
+    const otherUserId = chat.participants.find((id) => id !== currentUser.uid);
+    return otherUserId ? presences.get(otherUserId) || null : null;
   };
 
   if (loading) {
@@ -97,7 +137,7 @@ export default function ChatHistory({
       </div>
 
       {/* Chat List */}
-      <div className="flex-1  max-h-[50vh] overflow-y-scroll">
+      <div className="flex-1 overflow-y-auto">
         {chats.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center p-8">
             <FiMessageSquare className="w-12 h-12 text-foreground/30 mb-3" />
@@ -115,6 +155,7 @@ export default function ChatHistory({
               const otherParticipantName = getOtherParticipantName(chat);
               const otherParticipantPhoto = getOtherParticipantPhoto(chat);
               const unreadCount = chat.unreadCount[currentUser?.uid || ""] || 0;
+              const presence = getChatPresence(chat);
 
               return (
                 <button
@@ -127,7 +168,7 @@ export default function ChatHistory({
                   }`}
                 >
                   <div className="flex items-start space-x-3">
-                    {/* Avatar */}
+                    {/* Avatar with Presence */}
                     <div className="shrink-0 relative">
                       {otherParticipantPhoto ? (
                         <Image
@@ -142,6 +183,13 @@ export default function ChatHistory({
                           <FiUser className="w-6 h-6 text-highlights" />
                         </div>
                       )}
+
+                      {/* Online Status Indicator */}
+                      <div className="absolute -bottom-1 -right-1">
+                        <PresenceIndicator presence={presence} size="sm" />
+                      </div>
+
+                      {/* Unread Count Badge */}
                       {unreadCount > 0 && (
                         <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-highlights text-xs rounded-full flex items-center justify-center">
                           {unreadCount > 9 ? "9+" : unreadCount}
@@ -152,13 +200,23 @@ export default function ChatHistory({
                     {/* Chat Info */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-1">
-                        <h3
-                          className={`font-medium truncate ${
-                            isActive ? "text-primary" : "text-foreground"
-                          }`}
-                        >
-                          {otherParticipantName}
-                        </h3>
+                        <div className="flex items-center space-x-2">
+                          <h3
+                            className={`font-medium truncate ${
+                              isActive ? "text-primary" : "text-foreground"
+                            }`}
+                          >
+                            {otherParticipantName}
+                          </h3>
+
+                          {/* Online Status Text */}
+                          {presence?.isOnline && (
+                            <span className="text-xs text-green-500 font-medium">
+                              • Online
+                            </span>
+                          )}
+                        </div>
+
                         {chat.lastMessage && (
                           <span className="text-xs text-foreground/50 flex items-center space-x-1">
                             <FiClock className="w-3 h-3" />
@@ -181,6 +239,13 @@ export default function ChatHistory({
                           No messages yet
                         </p>
                       )}
+
+                      {/* Last Seen for Offline Users */}
+                      {presence && !presence.isOnline && (
+                        <p className="text-xs text-foreground/50 mt-1">
+                          Last seen {formatLastSeen(presence.lastSeen)}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </button>
@@ -191,4 +256,17 @@ export default function ChatHistory({
       </div>
     </div>
   );
+}
+
+// Helper function to format last seen time
+function formatLastSeen(lastSeen: Date): string {
+  const now = new Date();
+  const diffInMinutes = Math.floor(
+    (now.getTime() - lastSeen.getTime()) / (1000 * 60)
+  );
+
+  if (diffInMinutes < 1) return "just now";
+  if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+  if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
+  return `${Math.floor(diffInMinutes / 1440)}d ago`;
 }

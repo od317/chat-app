@@ -6,7 +6,7 @@ import {
   sendMessage,
   subscribeToMessages,
   loadMoreMessages,
-} from "@/lib/firbase/messageService";
+} from "@/lib/firebase/messageService";
 
 export const useMessages = (chatId: string | null) => {
   const [messages, setMessages] = useState<Message[]>([]);

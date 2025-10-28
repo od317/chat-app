@@ -3,7 +3,7 @@ import { useState, useRef, useEffect } from "react";
 import { FiSearch, FiX } from "react-icons/fi";
 import { useSearch } from "@/hooks/useSearch";
 import SearchResults from "./SearchResults";
-import { UserProfile } from "@/lib/firbase/userService";
+import { UserProfile } from "@/lib/firebase/userService";
 
 interface SearchBarProps {
   onStartChat: (user: UserProfile) => void;

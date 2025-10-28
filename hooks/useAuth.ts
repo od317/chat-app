@@ -7,9 +7,10 @@ import {
   onAuthStateChanged,
   User,
 } from "firebase/auth";
-import { auth } from "@/lib/firbase/clientApp";
-import { createOrUpdateUserProfile } from "@/lib/firbase/userService";
-import { clearAuthCookies, setAuthCookie } from "@/lib/authUtils";
+import { auth } from "@/lib/firebase/clientApp";
+import { setAuthCookie, clearAuthCookies } from "@/lib/authUtils";
+import { createOrUpdateUserProfile } from "@/lib/firebase/userService";
+import { setUserOffline } from "@/lib/firebase/presenceService"; // Add this import
 
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -21,14 +22,18 @@ export const useAuth = () => {
       auth,
       async (user) => {
         if (user) {
-          // Create/update user profile in Firestore when user logs in
+          // Create/update user profile and set online status
           try {
             await createOrUpdateUserProfile(user);
             await setAuthCookie(user);
+
+            // Initialize presence will be handled by usePresence hook
+            console.log("✅ User authenticated:", user.uid);
           } catch (error) {
-            console.error("Error creating user profile:", error);
+            console.error("Error during auth setup:", error);
           }
         } else {
+          // User logged out - clear cookies
           clearAuthCookies();
         }
         setUser(user);
@@ -52,7 +57,8 @@ export const useAuth = () => {
       provider.setCustomParameters({
         prompt: "select_account",
       });
-      await signInWithPopup(auth, provider);
+      const result = await signInWithPopup(auth, provider);
+      return result;
     } catch (error) {
       setError((error as Error).message);
       throw error;
@@ -61,6 +67,10 @@ export const useAuth = () => {
 
   const logout = async () => {
     try {
+      if (user) {
+        // Set user as offline before signing out
+        await setUserOffline(user.uid);
+      }
       await signOut(auth);
     } catch (error) {
       setError((error as Error).message);

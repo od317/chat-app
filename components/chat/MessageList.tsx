@@ -1,5 +1,5 @@
 "use client";
-import { Message } from "@/lib/firbase/messageService";
+import { Message } from "@/lib/firebase/messageService";
 import MessageBubble from "./MessageBubble";
 import { useEffect, useRef } from "react";
 import { FiLoader } from "react-icons/fi";

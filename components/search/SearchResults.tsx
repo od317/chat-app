@@ -1,7 +1,8 @@
 "use client";
-import { UserProfile } from "@/lib/firbase/userService";
+import { UserProfile } from "@/lib/firebase/userService";
 import UserCard from "./UserCard";
 import { FiSearch, FiUsers, FiAlertCircle } from "react-icons/fi";
+import { useOtherUsersPresence } from "@/hooks/usePresence";
 
 interface SearchResultsProps {
   results: UserProfile[];
@@ -13,13 +14,6 @@ interface SearchResultsProps {
   isOpen: boolean;
 }
 
-/**
- * Search Results Component - Displays search results in a dropdown/popover
- * Why separate component?
- * - Clean separation of concerns
- * - Reusable results display
- * - Better state management
- */
 export default function SearchResults({
   results,
   loading,
@@ -28,6 +22,10 @@ export default function SearchResults({
   onStartChat,
   isOpen,
 }: SearchResultsProps) {
+  // Get user IDs for presence tracking
+  const userIds = results.map((user) => user.uid);
+  const { presences } = useOtherUsersPresence(userIds);
+
   // Don't render if not open or no search term
   if (!isOpen || searchTerm.length < 2) {
     return null;
@@ -81,14 +79,18 @@ export default function SearchResults({
         {/* Results List */}
         {!loading && !error && results.length > 0 && (
           <div className="space-y-2">
-            {results.map((user) => (
-              <UserCard
-                key={user.uid}
-                user={user}
-                onStartChat={onStartChat}
-                variant="compact"
-              />
-            ))}
+            {results.map((user) => {
+              const presence = presences.get(user.uid) || null;
+              return (
+                <UserCard
+                  key={user.uid}
+                  user={user}
+                  presence={presence} // Pass presence to UserCard
+                  onStartChat={onStartChat}
+                  variant="compact"
+                />
+              );
+            })}
           </div>
         )}
 

@@ -1,7 +1,7 @@
 "use client";
 import { useState, useCallback, useRef } from "react";
 import { useAuth } from "./useAuth";
-import { searchUsers, UserProfile } from "@/lib/firbase/userService";
+import { searchUsers, UserProfile } from "@/lib/firebase/userService";
 
 /**
  * Custom hook for user search functionality

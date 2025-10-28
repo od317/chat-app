@@ -6,8 +6,8 @@ import {
   getOrCreateChat,
   subscribeToUserChats,
   markMessagesAsRead,
-} from "@/lib/firbase/chatService";
-import { UserProfile } from "@/lib/firbase/userService";
+} from "@/lib/firebase/chatService";
+import { UserProfile } from "@/lib/firebase/userService";
 
 export const useChat = () => {
   const { user: currentUser } = useAuth();

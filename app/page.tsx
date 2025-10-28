@@ -7,20 +7,22 @@ import SearchBar from "@/components/search/SearchBar";
 import ChatHistory from "@/components/chat/ChatHistory";
 import ChatWindow from "@/components/chat/ChatWindow";
 import { useChat } from "@/hooks/useChat";
-import { UserProfile } from "@/lib/firbase/userService";
-import { FiMessageSquare, FiUsers } from "react-icons/fi";
+import { UserProfile } from "@/lib/firebase/userService";
+import { FiUsers } from "react-icons/fi";
+import { usePresence } from "@/hooks/usePresence";
+import { ChatConversation } from "@/lib/firebase/chatService";
 
 export default function HomePage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [showMobileChat, setShowMobileChat] = useState(false);
-
+  const { user: currentUser } = useAuth();
+  const { initializeUserPresence } = usePresence();
   // Use our new chat hook
   const {
     chats,
     activeChat,
     loading: chatsLoading,
-    error,
     startChat,
     setActiveChat,
     getOtherParticipant,
@@ -38,10 +40,17 @@ export default function HomePage() {
   };
 
   // Handle chat selection
-  const handleChatSelect = (chat: any) => {
+  const handleChatSelect = (chat: ChatConversation) => {
     setActiveChat(chat);
     setShowMobileChat(true);
   };
+
+  useEffect(() => {
+    if (currentUser) {
+      console.log("🚀 Initializing presence for user:", currentUser.uid);
+      initializeUserPresence();
+    }
+  }, [currentUser, initializeUserPresence]);
 
   // Redirect if not authenticated
   useEffect(() => {

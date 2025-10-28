@@ -1,11 +1,13 @@
 "use client";
-import { ChatConversation } from "../../lib/firbase/chatService";
-import { UserProfile } from "../../lib/firbase/userService";
-import { useMessages } from "../../hooks/useMessages";
+import { ChatConversation } from "@/lib/firebase/chatService";
+import { UserProfile } from "@/lib/firebase/userService";
+import { useMessages } from "@/hooks/useMessages";
 import MessageList from "./MessageList";
 import MessageInput from "./MessageInput";
 import { FiUser, FiArrowLeft, FiMoreVertical } from "react-icons/fi";
-import { useAuth } from "../../hooks/useAuth";
+import { useAuth } from "@/hooks/useAuth";
+import { useOtherUsersPresence } from "@/hooks/usePresence"; // Add this import
+import PresenceIndicator from "@/components/presence/PresenceIndicator"; // Add this import
 import Image from "next/image";
 
 interface ChatWindowProps {
@@ -14,13 +16,6 @@ interface ChatWindowProps {
   onBack?: () => void;
 }
 
-/**
- * Chat Window Component - Main messaging interface
- * Why separate component?
- * - Complete chat UI in one component
- * - Manages message sending and receiving
- * - Handles chat header and input
- */
 export default function ChatWindow({
   chat,
   otherParticipant,
@@ -36,6 +31,13 @@ export default function ChatWindow({
     sendMessage,
     loadMoreMessages,
   } = useMessages(chat?.id || null);
+
+  // Subscribe to other participant's presence
+  const otherUserIds = otherParticipant ? [otherParticipant.uid] : [];
+  const { presences } = useOtherUsersPresence(otherUserIds);
+  const otherParticipantPresence = otherParticipant
+    ? presences.get(otherParticipant.uid) || null
+    : null;
 
   if (!chat || !otherParticipant) {
     return (
@@ -57,7 +59,7 @@ export default function ChatWindow({
   }
 
   return (
-    <div className="flex-1 flex flex-col bg-highlights/20 max-h-[90vh] mt-2 ml-2">
+    <div className="flex-1 flex flex-col bg-highlights/20">
       {/* Chat Header */}
       <div className="bg-highlights/80 backdrop-blur-sm border-b border-highlights/30 p-4">
         <div className="flex items-center space-x-3">
@@ -72,29 +74,58 @@ export default function ChatWindow({
             </button>
           )}
 
-          {/* Participant Avatar */}
-          {otherParticipant.photoURL ? (
-            <Image
-              width={10}
-              height={10}
-              src={otherParticipant.photoURL}
-              alt={otherParticipant.displayName}
-              className="w-10 h-10 rounded-full"
-            />
-          ) : (
-            <div className="w-10 h-10 rounded-full bg-linear-to-r from-primary to-secondary flex items-center justify-center">
-              <FiUser className="w-5 h-5 text-highlights" />
+          {/* Participant Avatar with Presence */}
+          <div className="relative">
+            {otherParticipant.photoURL ? (
+              <Image
+                height={10}
+                width={10}
+                src={otherParticipant.photoURL}
+                alt={otherParticipant.displayName}
+                className="w-10 h-10 rounded-full"
+              />
+            ) : (
+              <div className="w-10 h-10 rounded-full bg-linear-to-r from-primary to-secondary flex items-center justify-center">
+                <FiUser className="w-5 h-5 text-highlights" />
+              </div>
+            )}
+
+            {/* Online Status Indicator */}
+            <div className="absolute -bottom-1 -right-1">
+              <PresenceIndicator
+                presence={otherParticipantPresence}
+                size="sm"
+              />
             </div>
-          )}
+          </div>
 
           {/* Participant Info */}
           <div className="flex-1 min-w-0">
-            <h2 className="font-semibold text-foreground truncate">
-              {otherParticipant.displayName}
-            </h2>
+            <div className="flex items-center space-x-2">
+              <h2 className="font-semibold text-foreground truncate">
+                {otherParticipant.displayName}
+              </h2>
+
+              {/* Online Status */}
+              {otherParticipantPresence?.isOnline ? (
+                <span className="text-xs text-green-500 font-medium">
+                  Online
+                </span>
+              ) : (
+                <span className="text-xs text-foreground/60">Offline</span>
+              )}
+            </div>
+
             <p className="text-sm text-foreground/60 truncate">
               {otherParticipant.email}
             </p>
+
+            {/* Last Seen for Offline Users */}
+            {otherParticipantPresence && !otherParticipantPresence.isOnline && (
+              <p className="text-xs text-foreground/50">
+                Last seen {formatLastSeen(otherParticipantPresence.lastSeen)}
+              </p>
+            )}
           </div>
 
           {/* Menu Button */}
@@ -117,8 +148,8 @@ export default function ChatWindow({
       {/* Messages */}
       <MessageList
         messages={messages}
-        loading={loading}
         currentUser={currentUser}
+        loading={loading}
         hasMore={hasMore}
         onLoadMore={loadMoreMessages}
       />
@@ -132,4 +163,27 @@ export default function ChatWindow({
       />
     </div>
   );
+}
+
+// Helper function to format last seen time
+function formatLastSeen(lastSeen: Date): string {
+  const now = new Date();
+  const diffInMinutes = Math.floor(
+    (now.getTime() - lastSeen.getTime()) / (1000 * 60)
+  );
+
+  if (diffInMinutes < 1) return "just now";
+  if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  if (diffInHours < 24) return `${diffInHours}h ago`;
+
+  const diffInDays = Math.floor(diffInHours / 24);
+  if (diffInDays === 1) return "yesterday";
+  if (diffInDays < 7) return `${diffInDays}d ago`;
+
+  return lastSeen.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
 }
