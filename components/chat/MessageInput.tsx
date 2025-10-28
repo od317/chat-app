@@ -61,7 +61,7 @@ export default function MessageInput({
   return (
     <div className="border-t border-highlights/30 bg-highlights/50 backdrop-blur-sm">
       <form onSubmit={handleSubmit} className="p-4">
-        <div className="flex items-end space-x-3">
+        <div className="flex items-center justify-center space-x-3">
           {/* Attachment Button */}
           <button
             type="button"

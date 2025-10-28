@@ -59,7 +59,7 @@ export default function ChatWindow({
   }
 
   return (
-    <div className="flex-1 flex flex-col bg-highlights/20">
+    <div className="flex-1 flex flex-col bg-highlights/20 ">
       {/* Chat Header */}
       <div className="bg-highlights/80 backdrop-blur-sm border-b border-highlights/30 p-4">
         <div className="flex items-center space-x-3">

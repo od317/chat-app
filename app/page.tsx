@@ -77,10 +77,10 @@ export default function HomePage() {
   const otherParticipant = activeChat ? getOtherParticipant(activeChat) : null;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background max-h-screen overflow-y-hidden">
       <Navbar />
 
-      <main className="container mx-auto max-w-7xl h-[calc(100vh-4rem)]">
+      <main className="container mx-auto max-w-7xl h-[85vh] overflow-y-hidden">
         <div className="grid grid-cols-1 lg:grid-cols-4 h-full">
           {/* Left Sidebar - Search & Chat History */}
           <div
@@ -91,25 +91,14 @@ export default function HomePage() {
           >
             {/* Search Section */}
             <div className="p-4 border-b border-highlights/30">
-              <h2 className="text-lg font-semibold text-foreground mb-3">
-                Find Users
-              </h2>
               <SearchBar
                 onStartChat={handleStartChat}
                 placeholder="Search by name or email..."
               />
-
-              {/* Search Tips */}
-              <div className="mt-3 p-3 rounded-lg bg-highlights/30 border border-highlights/20">
-                <div className="flex items-center space-x-2 text-sm text-foreground/60">
-                  <FiUsers className="w-4 h-4" />
-                  <span>Find people to start chatting with</span>
-                </div>
-              </div>
             </div>
 
             {/* Chat History */}
-            <div className="flex-1">
+            <div className="flex-1 max-h-[85vh]  mt-4 mr-4">
               <ChatHistory
                 chats={chats}
                 activeChat={activeChat}
@@ -122,7 +111,7 @@ export default function HomePage() {
           {/* Chat Window */}
           <div
             className={`
-            lg:col-span-3 h-full
+            lg:col-span-3 max-h-[85vh] mt-4" 
             ${showMobileChat ? "flex" : "hidden lg:flex"}
           `}
           >
